@@ -1,0 +1,16 @@
+package com.zyb.rabbitmq.spring.impl;
+
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageListener;
+import org.springframework.stereotype.Component;
+
+@Component
+public class MyConsumer implements MessageListener {
+
+	@Override
+	public void onMessage(Message message) {
+
+		System.out.println(message.toString());
+	}
+
+}

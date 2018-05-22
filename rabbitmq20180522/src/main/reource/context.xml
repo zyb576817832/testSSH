@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<beans xmlns="http://www.springframework.org/schema/beans"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"  
+    xmlns:rabbit="http://www.springframework.org/schema/rabbit"  
+    xsi:schemaLocation="  
+        http://www.springframework.org/schema/beans   
+        http://www.springframework.org/schema/beans/spring-beans-3.1.xsd  
+        http://www.springframework.org/schema/context   
+        http://www.springframework.org/schema/context/spring-context-3.1.xsd  
+        http://www.springframework.org/schema/rabbit   
+        http://www.springframework.org/schema/rabbit/spring-rabbit-1.3.xsd">  
+
+
+	<context:component-scan base-package="com.*" />
+    <!--配置connection-factory，指定连接rabbit server参数-->
+    <rabbit:connection-factory id="connectionFactory"  host="192.168.0.104"  username="user_zyb"  password="123"  port="5672" virtual-host="/vhost_zyb"/> 
+
+    <!--通过指定下面的admin信息，当前producer中的exchange和queue会在rabbitmq服务器上自动生成-->
+    <rabbit:admin connection-factory="connectionFactory"/>
+
+    <!--定义queue-->
+    <rabbit:queue id="com.zyb.test" name="com.zyb.test" durable="true" auto-delete="false" exclusive="false"/>
+
+    <!-- 定义direct exchange，绑定com.zyb.test queue -->
+    <rabbit:direct-exchange name="myChange" durable="true" auto-delete="false">
+        <rabbit:bindings>
+            <rabbit:binding queue="com.zyb.test"  key="hello"></rabbit:binding>
+        </rabbit:bindings>
+    </rabbit:direct-exchange>
+    
+    <!--定义rabbit template用于数据的接收和发送-->
+    <rabbit:template id="amqpTemplate" connection-factory="connectionFactory" exchange="myChange"  message-converter="jsonMessageConverter"/>
+    
+    <!-- 接受 -->
+     <bean id="myConsumer" class="com.zyb.rabbitmq.spring.impl.MyConsumer"></bean>
+     <!--监听配置 自动响应  -->
+    <rabbit:listener-container connection-factory="connectionFactory" acknowledge="auto"> 
+        <rabbit:listener queues="com.zyb.test" ref="myConsumer"/>
+    </rabbit:listener-container>  
+    
+    <!-- 消息对象json转换类 -->
+    <bean id="jsonMessageConverter" class="org.springframework.amqp.support.converter.Jackson2JsonMessageConverter" />  
+</beans>
